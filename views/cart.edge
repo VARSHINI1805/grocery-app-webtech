@@ -1,0 +1,111 @@
+@layout('layouts.app')
+
+@section('content')
+<script>		
+  $(document).ready(function(){		
+      $("li").removeClass("active");		
+      $("li.cart").addClass("active");		
+  });		
+</script>
+
+@if(EmptyCart)
+  <h1 class="sty" style="text-align : center;">Shopping Cart is Empty</h1>
+@else
+  <h1 class="sty" style="text-align : center;">Shopping Cart</h1>
+  <br>
+  <div class="col-lg-12">
+    <div class="row">
+      @each(item in ItemsArray)
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card h-100 text-center">
+          <form action="/updateCart" method="POST">
+            <a href="#"><img class="card-img-top" src="{{item.imagePath}}" alt=""></a>
+            <div class="card-body">
+              <h4 class="card-title textlimit">
+                <a href="/item/{{item.itemId}}">{{item.name}}</a>
+              </h4>
+              <h5>Price: ${{item.price}}</h5>
+              <h5>Quantity: {{item.quantity}}</h5>
+              <input type="hidden" name="itemId" value="{{item.itemId}}">
+              <input type="hidden" name="quantity" value="{{item.quantity}}">
+            </div>
+            <div class="card-footer" style="text-align: center;">
+              <button class="btn addbtncolor" name="change" value="dec">-</button>
+              <button class="btn addbtncolor" name="change" value="inc">+</button> 
+          </form>
+          <form action="/removeFromCart" method="POST">
+            <input type="hidden" name="itemId" value="{{item.itemId}}">   
+            <button class="btn btn-outline-danger">Remove</button>
+          </form>
+        </div>
+        </div>
+      </div>
+      <br>
+      @endeach
+    </div>
+  </div>
+
+  <div style="text-align: center">
+    <h3>Total Purchase: ${{price}}</h3>
+    <form id="checkout-form" action="/storeTransaction" method="POST">
+      <input type="text" class="form form-control" name="name" required placeholder="Full Name"
+        style="max-width: 20rem; text-align: center; margin: 0 auto;">
+      <br>
+
+      <input type="email" class="form form-control" name="email" required placeholder="Email Address"
+        style="max-width: 20rem; text-align: center; margin: 0 auto;">
+      <br>
+
+      <input type="text" class="form form-control" name="phone" required placeholder="Phone Number"
+        style="max-width: 20rem; text-align: center; margin: 0 auto;">
+      <br>
+
+      <input type="text" class="form form-control" name="address" required placeholder="Delivery Address"
+        style="max-width: 20rem; text-align: center; margin: 0 auto;">
+      <br>
+
+      <button class="btn addbtncolor" type="button" onclick="initiateRazorpay()">Check out & Pay</button>
+    </form>
+  </div>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    function initiateRazorpay() {
+      const name = document.querySelector('input[name="name"]').value;
+      const email = document.querySelector('input[name="email"]').value;
+      const phone = document.querySelector('input[name="phone"]').value;
+      const address = document.querySelector('input[name="address"]').value;
+
+      const amount = Math.round({{price}} * 100);
+ // Razorpay amount in paise
+
+      const options = {
+        key: "rzp_test_hyc3ht0ngvqOD5", // test key from Razorpay dashboard
+        amount: amount,
+        currency: "INR",
+        name: "ONLINE GROCERY",
+        description: "Order Payment",
+        image: "https://pics.craiyon.com/2023-11-14/MvreTblMSFqKymeg0Zj52w.webp",
+        handler: function (response) {
+          alert("Payment successful! ✅");
+          document.getElementById("checkout-form").submit(); // submit form after success
+        },
+        prefill: {
+          name: name,
+          email: email,
+          contact: phone
+        },
+        notes: {
+          address: address
+        },
+        theme: {
+          color: "#3399cc"
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+    }
+  </script>
+@endif
+@endsection
